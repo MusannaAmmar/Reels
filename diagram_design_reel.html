@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Diagram Design — Reel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --border:#30363d; --border2:#21262d;
+    --text:#e6edf3; --muted:#8b949e; --orange:#f78166; --orange-bright:#ff8a5c;
+    --white:#ffffff;
+    --stage-w: 1080px; --stage-h: 1920px;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html,body{ height:100%; background:#000; }
+  body{
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;
+    font-family:'Inter',sans-serif; padding:24px; min-height:100vh; background:#000;
+  }
+
+  .stage{
+    position:relative;
+    width: var(--stage-w); height: var(--stage-h);
+    max-width:94vw; max-height:88vh;
+    aspect-ratio: var(--stage-w) / var(--stage-h);
+    background:var(--bg);
+    overflow:hidden;
+    border-radius:18px;
+    box-shadow:0 30px 90px rgba(0,0,0,.65);
+  }
+
+  /* persistent background: dot grid + soft glow, sits under every scene */
+  .bg-layer{ position:absolute; inset:0; z-index:0; overflow:hidden; }
+  .bg-dots{
+    position:absolute; inset:-40px;
+    background-image: radial-gradient(rgba(255,255,255,.06) 1.4px, transparent 1.4px);
+    background-size: 34px 34px;
+    animation: driftgrid 30s linear infinite;
+  }
+  @keyframes driftgrid{ from{ transform:translate(0,0);} to{ transform:translate(-34px,-34px);} }
+  .bg-glow{
+    position:absolute; width:900px; height:900px; border-radius:50%;
+    background:radial-gradient(circle, rgba(247,129,102,.14), transparent 70%);
+    top:-260px; left:-200px; filter:blur(10px);
+    animation: floatglow 16s ease-in-out infinite;
+  }
+  @keyframes floatglow{ 0%,100%{ transform:translate(0,0);} 50%{ transform:translate(60px,120px);} }
+
+  .scene{
+    position:absolute; inset:0; z-index:1;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:9% 8%;
+    opacity:0; pointer-events:none;
+    transition:opacity .4s ease;
+  }
+  .scene.active{ opacity:1; }
+
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace; font-weight:500; font-size:15px;
+    letter-spacing:.12em; text-transform:uppercase; color:var(--orange);
+    margin-bottom:22px; opacity:0; transform:translateY(-8px);
+    transition:opacity .4s ease, transform .4s ease;
+  }
+  .scene.active .eyebrow{ opacity:1; transform:translateY(0); }
+
+  /* ---------- Scene 1: hook ---------- */
+  .hook-line{
+    font-weight:800; font-size:56px; line-height:1.22; text-align:center; color:var(--white);
+    max-width:820px;
+  }
+  .hook-line .accent{ color:var(--orange); }
+  .word{
+    display:inline-block; opacity:0; transform:translateY(16px) scale(.96);
+    transition:opacity .45s cubic-bezier(.2,.8,.2,1), transform .45s cubic-bezier(.2,.8,.2,1);
+  }
+  .scene.active .word{ opacity:1; transform:translateY(0) scale(1); }
+  .hook-sub{
+    margin-top:34px; font-weight:600; font-size:28px; color:var(--muted); text-align:center;
+    opacity:0; transform:translateY(10px);
+    transition:opacity .5s ease .1s, transform .5s ease .1s;
+  }
+  .scene.active .hook-sub{ opacity:1; transform:translateY(0); }
+  .hook-sub .accent{ color:var(--orange); font-weight:700; }
+
+  /* ---------- Scene 2: origin + CODED github ui ---------- */
+  .origin-text{
+    font-weight:600; font-size:24px; line-height:1.5; color:var(--text); text-align:center;
+    max-width:780px; margin-bottom:26px;
+    opacity:0; transform:translateY(10px);
+    transition:opacity .5s ease, transform .5s ease;
+  }
+  .scene.active .origin-text{ opacity:1; transform:translateY(0); }
+  .origin-text b{ color:var(--orange); font-weight:800; }
+
+  .gh-shell{
+    width:100%; max-width:860px; border-radius:14px; overflow:hidden;
+    border:1px solid var(--border); box-shadow:0 24px 60px rgba(0,0,0,.5);
+    position:relative; background:var(--bg); color:#c9d1d9; font-family:'Inter',sans-serif;
+    opacity:0; transform:translateY(16px) scale(.98);
+    transition:opacity .5s ease .15s, transform .5s ease .15s;
+  }
+  .scene.active .gh-shell{ opacity:1; transform:translateY(0) scale(1); }
+  .gh-topbar{ height:34px; background:var(--panel); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; padding:0 12px; }
+  .gh-dot{ width:7px; height:7px; border-radius:50%; background:#4a4f57; }
+  .gh-url{ flex:1; background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:3px 10px; font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .gh-body{ padding:18px 20px 20px; }
+  .gh-crumb{ display:flex; align-items:center; gap:8px; font-size:19px; font-weight:600; flex-wrap:wrap; }
+  .gh-crumb .owner{ color:var(--muted); font-weight:400; } .gh-crumb .repo{ color:#58a6ff; }
+  .gh-public{ font-size:11px; border:1px solid var(--border); border-radius:99px; padding:1px 9px; color:var(--muted); }
+  .gh-tabs{ display:flex; gap:16px; margin-top:10px; font-size:12.5px; color:#c9d1d9; overflow-x:auto; border-bottom:1px solid var(--border2); white-space:nowrap; padding-bottom:8px; }
+  .gh-tabs .tab{ color:var(--muted); } .gh-tabs .tab.active{ color:#fff; }
+  .gh-actions{ display:flex; gap:8px; margin-top:12px; font-size:11.5px; }
+  .gh-action{ border:1px solid var(--border); border-radius:6px; padding:5px 10px; color:#c9d1d9; position:relative; }
+  .gh-action .num{ background:#21262d; border-radius:99px; padding:0 6px; font-size:10.5px; margin-left:5px; }
+  .gh-action.star{ border-color:var(--border); transition:border-color .3s ease, box-shadow .3s ease; }
+  .gh-action.star.hit{ border-color:var(--orange); box-shadow:0 0 0 3px rgba(247,129,102,.18); }
+  .gh-subrow{ display:flex; align-items:center; gap:10px; margin-top:14px; font-size:11px; color:var(--muted); }
+  .gh-branch{ border:1px solid var(--border); border-radius:6px; padding:3px 9px; color:#c9d1d9; }
+  .gh-commitrow{ display:flex; justify-content:space-between; gap:10px; padding:10px 12px; background:var(--panel); border:1px solid var(--border2); border-radius:10px 10px 0 0; font-size:11px; margin-top:14px; }
+  .gh-commitrow .who{ color:#c9d1d9; font-weight:600; } .gh-commitrow .msg{ color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
+  .gh-filelist{ font-size:12px; border:1px solid var(--border2); border-top:none; border-radius:0 0 10px 10px; overflow:hidden; }
+  .gh-filerow{ display:flex; justify-content:space-between; gap:12px; padding:9px 12px; border-bottom:1px solid var(--border2); opacity:0; transform:translateX(-10px); transition:opacity .35s ease, transform .35s ease; }
+  .gh-filerow:last-child{ border-bottom:none; }
+  .gh-filerow.in{ opacity:1; transform:translateX(0); }
+  .gh-filerow .name{ color:#58a6ff; } .gh-filerow .commit{ color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .gh-about{ margin-top:16px; border-top:1px solid var(--border2); padding-top:14px; font-size:11.5px; color:var(--muted); line-height:1.55; }
+  .gh-about b{ color:#c9d1d9; }
+
+  .gh-cursor{ position:absolute; width:16px; height:16px; border-radius:50%; background:#fff; box-shadow:0 0 0 4px rgba(255,255,255,.2), 0 3px 10px rgba(0,0,0,.5); z-index:20; opacity:0; pointer-events:none; }
+  .gh-ripple{ position:absolute; width:16px; height:16px; border-radius:50%; border:2px solid var(--orange); z-index:19; opacity:0; pointer-events:none; }
+
+  /* ---------- Scene 3: CODED flowchart, scrolled, real cursor-free draw-in ---------- */
+  .lower-third{
+    position:absolute; left:6%; right:6%; bottom:6%; z-index:5;
+    text-align:center;
+  }
+  .lt-line{
+    font-weight:700; font-size:26px; color:var(--white);
+    background:rgba(13,17,23,.72); border:1px solid var(--border);
+    display:inline-block; padding:14px 26px; border-radius:12px;
+    opacity:0; transform:translateY(10px);
+    position:absolute; left:50%; transform-origin:center;
+    white-space:nowrap;
+  }
+  .lt-line .accent{ color:var(--orange); }
+
+  .browser-frame{
+    width:820px; max-width:88%; height:660px; border-radius:14px; overflow:hidden;
+    border:1px solid var(--border); background:#fff; box-shadow:0 24px 70px rgba(0,0,0,.55);
+    position:relative;
+  }
+  .browser-bar{
+    height:36px; background:var(--panel); border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:8px; padding:0 14px;
+  }
+  .bdot{ width:9px; height:9px; border-radius:50%; background:#3a3f47; }
+  .burl{ margin-left:10px; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--muted);
+    background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:4px 10px; flex:1;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .scroll-viewport{ position:relative; height:624px; overflow:hidden; background:#f4f1ea; }
+  .fc-track{
+    position:absolute; top:0; left:0; width:100%;
+    padding:44px 60px 60px;
+    transform: translateY(0);
+  }
+  .scene.active .fc-track{ animation: flowscroll 13.4s cubic-bezier(.5,0,.35,1) .3s forwards; }
+  @keyframes flowscroll{
+    from{ transform:translateY(0); }
+    to{ transform:translateY(-720px); }
+  }
+  .fc-eyebrow{ font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:#6b7280; margin-bottom:10px; }
+  .fc-title{ font-family:'Inter',sans-serif; font-weight:700; font-size:32px; color:#2b2823; margin-bottom:38px; }
+  .fc-node{
+    background:#fff; border:2px solid #2b2823; border-radius:10px; padding:16px 22px;
+    width:340px; margin:0 auto 8px; text-align:center;
+    opacity:0; transform:translateY(14px); transition:opacity .5s ease, transform .5s ease;
+  }
+  .fc-node.in{ opacity:1; transform:translateY(0); }
+  .fc-node.oval{ border-radius:99px; background:#ece9e2; border-color:#c7c0b2; }
+  .fc-node .t{ font-weight:800; font-size:19px; color:#1c1a17; }
+  .fc-node .s{ font-family:'JetBrains Mono',monospace; font-size:12px; color:#6b6558; margin-top:4px; }
+  .fc-arrow{ width:2px; height:34px; background:#8b8578; margin:0 auto; opacity:0; transition:opacity .3s ease; }
+  .fc-arrow.in{ opacity:1; }
+  .fc-decision{
+    width:250px; height:130px; margin:0 auto 8px; position:relative;
+    opacity:0; transform:translateY(14px); transition:opacity .5s ease, transform .5s ease;
+  }
+  .fc-decision.in{ opacity:1; transform:translateY(0); }
+  .fc-decision .diamond{
+    position:absolute; inset:0; background:#fff; border:2px solid #2b2823;
+    transform:rotate(45deg); border-radius:6px;
+  }
+  .fc-decision .label{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    flex-direction:column; font-weight:800; font-size:17px; color:#1c1a17; text-align:center; line-height:1.3;
+  }
+  .fc-branch-row{ display:flex; align-items:flex-start; justify-content:center; gap:26px; margin-top:6px; }
+  .fc-branch{ display:flex; flex-direction:column; align-items:center; }
+  .fc-branch-arrow{ width:2px; height:30px; background:#8b8578; opacity:0; transition:opacity .3s ease; }
+  .fc-branch-arrow.yes{ background:var(--orange); }
+  .fc-branch-arrow.in{ opacity:1; }
+  .fc-branch-tag{ font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; margin-bottom:4px; opacity:0; transition:opacity .3s ease; }
+  .fc-branch-tag.in{ opacity:1; }
+  .fc-branch-tag.yes{ color:var(--orange); }
+  .fc-branch-tag.no{ color:#6b6558; }
+  .fc-node.qualified{ border-color:var(--orange); background:#fdece4; width:260px; }
+  .fc-node.notqualified{ background:#ece9e2; border-color:#c7c0b2; width:260px; }
+  .fc-legend{ margin-top:44px; padding-top:20px; border-top:1px solid #d8d0c0; font-family:'JetBrains Mono',monospace; font-size:11px; color:#8b8578; text-align:center;
+    opacity:0; transition:opacity .5s ease; }
+  .fc-legend.in{ opacity:1; }
+
+  /* ---------- Scene 4: payoff ---------- */
+  .payoff-line{
+    font-weight:800; font-size:50px; color:var(--white); text-align:center;
+    margin-bottom:6px;
+    opacity:0; transform:scale(.85);
+    transition:opacity .4s cubic-bezier(.2,1.4,.4,1), transform .4s cubic-bezier(.2,1.4,.4,1);
+  }
+  .payoff-line.strike{ color:var(--muted); text-decoration:line-through; text-decoration-color:var(--orange); }
+  .scene.active .payoff-line{ opacity:1; transform:scale(1); }
+  .scene.active .payoff-line:nth-child(1){ transition-delay:.05s; }
+  .scene.active .payoff-line:nth-child(2){ transition-delay:.65s; }
+  .scene.active .payoff-line:nth-child(3){ transition-delay:1.3s; }
+
+  /* ---------- Scene 5: CTA ---------- */
+  .cta-text{
+    font-weight:700; font-size:32px; line-height:1.5; color:var(--white); text-align:center;
+    max-width:760px; margin-bottom:44px;
+    opacity:0; transform:translateY(12px);
+    transition:opacity .5s ease, transform .5s ease;
+  }
+  .scene.active .cta-text{ opacity:1; transform:translateY(0); }
+  .cta-text .accent{ color:var(--orange); }
+  .comment-pill{
+    display:flex; align-items:center; gap:14px;
+    background:var(--orange); color:#1a1008; font-weight:800; font-size:24px;
+    padding:18px 34px; border-radius:99px;
+    opacity:0; transform:scale(.7);
+    transition:opacity .45s cubic-bezier(.2,1.5,.4,1) .2s, transform .45s cubic-bezier(.2,1.5,.4,1) .2s;
+  }
+  .scene.active .comment-pill{ opacity:1; transform:scale(1); }
+  .scene.active .comment-pill{ animation: pillpulse 1.7s ease 1.2s infinite; }
+  @keyframes pillpulse{
+    0%,100%{ box-shadow:0 0 0 0 rgba(247,129,102,.5); }
+    50%{ box-shadow:0 0 0 16px rgba(247,129,102,0); }
+  }
+
+  /* ---------- controls (outside recorded frame) ---------- */
+  .controls{ display:flex; gap:10px; align-items:center; }
+  .btn{
+    font-family:'Inter',sans-serif; font-weight:700; font-size:13px;
+    background:var(--orange); color:#1a1008; border:none; border-radius:99px;
+    padding:10px 20px; cursor:pointer;
+  }
+  .btn.secondary{ background:transparent; color:#cfd6de; border:1px solid #333a42; }
+  .timer{ font-family:'JetBrains Mono',monospace; color:#8b949e; font-size:12px; min-width:56px; text-align:center; }
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+  <div class="bg-layer"><div class="bg-glow"></div><div class="bg-dots"></div></div>
+
+  <!-- Scene 1: hook (0-7s) -->
+  <div class="scene" id="scene1" data-start="0" data-duration="7">
+    <div class="hook-line">
+      <span class="word">18,000</span> <span class="word accent">GitHub</span> <span class="word accent">stars</span>
+      <span class="word">in</span> <span class="word">just</span> <span class="word">4</span> <span class="word">days.</span>
+    </div>
+    <div class="hook-sub">This is a <span class="accent">Claude plugin.</span></div>
+  </div>
+
+  <!-- Scene 2: origin + CODED github ui, cursor targets stars (7-14s) -->
+  <div class="scene" id="scene2" data-start="7" data-duration="7">
+    <div class="eyebrow">The origin story</div>
+    <div class="origin-text">
+      Many people find it hard to make diagrams and flowcharts <b>exactly how they want</b> through AI —
+      so Cathryn hit the same wall, and <b>built her way out of it.</b>
+    </div>
+    <div class="gh-shell">
+      <div class="gh-topbar"><div class="gh-dot"></div><div class="gh-dot"></div><div class="gh-dot"></div>
+        <div class="gh-url">github.com/cathrynlavery/diagram-design</div>
+      </div>
+      <div class="gh-body">
+        <div class="gh-crumb"><span class="owner">cathrynlavery</span>/<span class="repo">diagram-design</span><span class="gh-public">Public</span></div>
+        <div class="gh-tabs"><div class="tab active">Code</div><div class="tab">Issues 6</div><div class="tab">Pull requests 13</div><div class="tab">Agents</div><div class="tab">Actions</div></div>
+        <div class="gh-actions">
+          <div class="gh-action">👁 Watch<span class="num">74</span></div>
+          <div class="gh-action">⑂ Fork<span class="num">1.1k</span></div>
+          <div class="gh-action star" id="s2-star">☆ Star<span class="num" id="s2-starnum">18.0k</span></div>
+        </div>
+        <div class="gh-subrow"><div class="gh-branch">⑂ main</div><span>10 Branches</span><span>0 Tags</span></div>
+        <div class="gh-commitrow"><span class="who">cathrynlavery</span><span class="msg">&nbsp;Add named client profiles (#61)</span><span>15h</span></div>
+        <div class="gh-filelist" id="s2-list">
+          <div class="gh-filerow"><div class="name">📁 .agents/plugins</div><div class="commit">feat(plugin): automatic updates via native marketplaces</div></div>
+          <div class="gh-filerow"><div class="name">📁 .claude-plugin</div><div class="commit">Add named client profiles (#61)</div></div>
+          <div class="gh-filerow"><div class="name">📁 commands</div><div class="commit">Add named client profiles (#61)</div></div>
+          <div class="gh-filerow"><div class="name">📁 docs</div><div class="commit">Add named client profiles (#61)</div></div>
+        </div>
+        <div class="gh-about"><b>29 editorial diagram types</b> for Claude Code. Self-contained HTML + SVG. No shadows, no Mermaid-slop.</div>
+      </div>
+      <div class="gh-cursor" id="s2-cursor"></div>
+      <div class="gh-ripple" id="s2-ripple"></div>
+    </div>
+  </div>
+
+  <!-- Scene 3: feature explanation + CODED flowchart scroll (14-28s) -->
+  <div class="scene" id="scene3" data-start="14" data-duration="14">
+    <div class="eyebrow">How it works</div>
+    <div class="browser-frame">
+      <div class="browser-bar"><div class="bdot"></div><div class="bdot"></div><div class="bdot"></div>
+        <div class="burl">example-cv-job-matching-flowchart.html</div>
+      </div>
+      <div class="scroll-viewport">
+        <div class="fc-track" id="fc-track">
+          <div class="fc-eyebrow">FLOWCHART · DIAGRAM DESIGN</div>
+          <div class="fc-title">CV job-matching pipeline</div>
+
+          <div class="fc-node oval" id="fc1"><div class="t">User login</div><div class="s">session start</div></div>
+          <div class="fc-arrow" id="fca1"></div>
+          <div class="fc-node" id="fc2"><div class="t">Upload CV</div><div class="s">PDF/DOCX → parsed text</div></div>
+          <div class="fc-arrow" id="fca2"></div>
+          <div class="fc-node" id="fc3"><div class="t">Trigger scraper</div><div class="s">fetch jobs · multiple sites</div></div>
+          <div class="fc-arrow" id="fca3"></div>
+          <div class="fc-node" id="fc4"><div class="t">Generate embeddings</div><div class="s">CV + jobs → vectors</div></div>
+          <div class="fc-arrow" id="fca4"></div>
+          <div class="fc-node" id="fc5"><div class="t">Semantic search</div><div class="s">match vs job description</div></div>
+          <div class="fc-arrow" id="fca5"></div>
+          <div class="fc-decision" id="fc6"><div class="diamond"></div><div class="label">Eligible<br>for role?</div></div>
+
+          <div class="fc-branch-row">
+            <div class="fc-branch">
+              <div class="fc-branch-tag no" id="fctagno">NO</div>
+              <div class="fc-branch-arrow" id="fcbno"></div>
+              <div class="fc-node notqualified" id="fc7"><div class="t">Send not-qualified email</div><div class="s">notify · no match</div></div>
+            </div>
+            <div class="fc-branch">
+              <div class="fc-branch-tag yes" id="fctagyes">YES</div>
+              <div class="fc-branch-arrow yes" id="fcbyes"></div>
+              <div class="fc-node qualified" id="fc8"><div class="t">Send qualified email</div><div class="s">notify · eligible match</div></div>
+            </div>
+          </div>
+
+          <div class="fc-legend" id="fclegend">LEGEND — oval: start/end · rectangle: step · diamond: decision · orange: happy path</div>
+        </div>
+      </div>
+    </div>
+    <div class="lower-third" id="lower-third">
+      <div class="lt-line" id="lt1" style="top:0;">27 diagram types, <span class="accent">one skill</span> —</div>
+      <div class="lt-line" id="lt2" style="top:0;">for Claude Code, Codex, and beyond.</div>
+      <div class="lt-line" id="lt3" style="top:0;">Just <span class="accent">describe the flow.</span> It draws it.</div>
+    </div>
+  </div>
+
+  <!-- Scene 4: payoff (28-33s) -->
+  <div class="scene" id="scene4" data-start="28" data-duration="5">
+    <div class="payoff-line strike">No Figma.</div>
+    <div class="payoff-line strike">No generic rounded boxes.</div>
+    <div class="payoff-line">No 30-minute color-picking sessions.</div>
+  </div>
+
+  <!-- Scene 5: CTA outro (33-40s) -->
+  <div class="scene" id="scene5" data-start="33" data-duration="7">
+    <div class="cta-text">
+      If you want the whole repo plugin set up in Claude —
+      just comment <span class="accent">"plugin"</span> and I'll send it to you in DMs.
+    </div>
+    <div class="comment-pill">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.38 8.38 0 01-4.13 7.24 8.5 8.5 0 01-8.61.44L3 21l1.82-5.26A8.38 8.38 0 013 11.5 8.5 8.5 0 0112 3a8.44 8.44 0 019 8.5z" stroke="#1a1008" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Comment "plugin"
+    </div>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="btn" id="playbtn">▶ Play</button>
+  <button class="btn secondary" id="restartbtn">↺ Restart</button>
+  <button class="btn secondary" id="aspectbtn">⇄ 16:9</button>
+  <div class="timer" id="timer">0.0s</div>
+</div>
+
+<script>
+/* ---------------- single clock driving every scene ---------------- */
+const scenes = Array.from(document.querySelectorAll('.scene')).map(el => ({
+  el,
+  start: parseFloat(el.dataset.start),
+  duration: parseFloat(el.dataset.duration),
+  entered: false
+}));
+const TOTAL = Math.max(...scenes.map(s => s.start + s.duration));
+
+let playing = false;
+let startTime = null;
+let rafId = null;
+
+function positionLowerThird(){
+  // stagger the three lower-third lines within scene3's 14s window
+  const lines = [
+    { id:'lt1', delay:0.0,  hold:4.4 },
+    { id:'lt2', delay:4.6,  hold:4.4 },
+    { id:'lt3', delay:9.2,  hold:4.6 }
+  ];
+  return lines;
+}
+const ltConfig = positionLowerThird();
+
+function animateFileRows(){
+  document.querySelectorAll('#s2-list .gh-filerow').forEach((row,i)=>{
+    setTimeout(()=>row.classList.add('in'), 150 + i*160);
+  });
+}
+
+function animateCursorToStar(){
+  const cur = document.getElementById('s2-cursor');
+  const rip = document.getElementById('s2-ripple');
+  const star = document.getElementById('s2-star');
+  const shell = document.querySelector('#scene2 .gh-shell');
+  setTimeout(() => {
+    const shellRect = shell.getBoundingClientRect();
+    const starRect = star.getBoundingClientRect();
+    const x = starRect.left - shellRect.left + starRect.width/2;
+    const y = starRect.top - shellRect.top + starRect.height/2;
+    cur.style.left = (x - 130) + 'px'; cur.style.top = (y + 90) + 'px'; cur.style.opacity = '0';
+    rip.style.left = x + 'px'; rip.style.top = y + 'px';
+    requestAnimationFrame(() => {
+      cur.style.transition = 'left 1s ease, top 1s ease, opacity .3s ease';
+      setTimeout(() => { cur.style.opacity = '1'; cur.style.left = x + 'px'; cur.style.top = y + 'px'; }, 200);
+      setTimeout(() => {
+        star.classList.add('hit');
+        rip.style.transition = 'transform .8s ease, opacity .8s ease';
+        rip.style.opacity = '1'; rip.style.transform = 'scale(.4)';
+        requestAnimationFrame(() => { rip.style.transform = 'scale(3.6)'; rip.style.opacity = '0'; });
+      }, 1250);
+    });
+  }, 700);
+}
+
+function animateFlowchart(){
+  const seq = [
+    { id:'fc1',  delay:0.4 },
+    { id:'fca1', delay:1.0 },
+    { id:'fc2',  delay:1.3 },
+    { id:'fca2', delay:2.7 },
+    { id:'fc3',  delay:3.0 },
+    { id:'fca3', delay:4.4 },
+    { id:'fc4',  delay:4.7 },
+    { id:'fca4', delay:6.1 },
+    { id:'fc5',  delay:6.4 },
+    { id:'fca5', delay:7.8 },
+    { id:'fc6',  delay:8.1 },
+    { id:'fctagno',  delay:9.4 },
+    { id:'fcbno',    delay:9.5 },
+    { id:'fc7',      delay:9.9 },
+    { id:'fctagyes', delay:9.4 },
+    { id:'fcbyes',   delay:9.5 },
+    { id:'fc8',      delay:9.9 },
+    { id:'fclegend', delay:11.6 },
+  ];
+  seq.forEach(cfg => {
+    setTimeout(() => {
+      const el = document.getElementById(cfg.id);
+      if(el) el.classList.add('in');
+    }, cfg.delay * 1000);
+  });
+}
+
+function enterScene(scene){
+  if(scene.entered) return;
+  scene.entered = true;
+  if(scene.el.id === 'scene2'){
+    animateFileRows();
+    animateCursorToStar();
+  }
+  if(scene.el.id === 'scene3'){
+    animateFlowchart();
+    ltConfig.forEach(cfg => {
+      const el = document.getElementById(cfg.id);
+      setTimeout(() => {
+        el.style.transition = 'opacity .4s ease, transform .4s ease';
+        el.style.opacity = '1';
+        el.style.transform = 'translate(-50%, 0)';
+      }, cfg.delay * 1000);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transform = 'translate(-50%, -10px)';
+      }, (cfg.delay + cfg.hold) * 1000);
+    });
+  }
+}
+
+function resetScene(scene){
+  scene.entered = false;
+  if(scene.el.id === 'scene3'){
+    ['lt1','lt2','lt3'].forEach(id => {
+      const el = document.getElementById(id);
+      el.style.transition = 'none';
+      el.style.opacity = '0';
+      el.style.transform = 'translate(-50%, 10px)';
+    });
+    document.querySelectorAll('.fc-node, .fc-arrow, .fc-decision, .fc-branch-arrow, .fc-branch-tag, .fc-legend')
+      .forEach(el => el.classList.remove('in'));
+    const track = document.getElementById('fc-track');
+    track.style.animation = 'none';
+    void track.offsetWidth;
+    track.style.animation = '';
+  }
+  if(scene.el.id === 'scene2'){
+    document.querySelectorAll('#s2-list .gh-filerow').forEach(row => row.classList.remove('in'));
+    document.getElementById('s2-star').classList.remove('hit');
+    const cur = document.getElementById('s2-cursor');
+    const rip = document.getElementById('s2-ripple');
+    cur.style.transition = ''; cur.style.opacity = '0';
+    rip.style.transition = ''; rip.style.opacity = '0'; rip.style.transform = '';
+  }
+}
+
+function tick(now){
+  if(!playing) return;
+  const elapsed = (now - startTime) / 1000;
+  document.getElementById('timer').textContent = elapsed.toFixed(1) + 's';
+
+  scenes.forEach(scene => {
+    const inWindow = elapsed >= scene.start && elapsed < scene.start + scene.duration;
+    if(inWindow){
+      scene.el.classList.add('active');
+      enterScene(scene);
+    } else {
+      scene.el.classList.remove('active');
+    }
+  });
+
+  if(elapsed >= TOTAL){
+    playing = false;
+    return;
+  }
+  rafId = requestAnimationFrame(tick);
+}
+
+function play(){
+  if(playing) return;
+  playing = true;
+  startTime = performance.now();
+  rafId = requestAnimationFrame(tick);
+}
+
+function restart(){
+  playing = false;
+  if(rafId) cancelAnimationFrame(rafId);
+  scenes.forEach(scene => {
+    scene.el.classList.remove('active');
+    resetScene(scene);
+  });
+  document.getElementById('timer').textContent = '0.0s';
+  requestAnimationFrame(() => play());
+}
+
+document.getElementById('playbtn').addEventListener('click', play);
+document.getElementById('restartbtn').addEventListener('click', restart);
+document.getElementById('aspectbtn').addEventListener('click', () => {
+  const stage = document.getElementById('stage');
+  const btn = document.getElementById('aspectbtn');
+  if(stage.style.getPropertyValue('--stage-w') !== '1920px' && getComputedStyle(stage).width !== '1920px'){
+    document.documentElement.style.setProperty('--stage-w','1920px');
+    document.documentElement.style.setProperty('--stage-h','1080px');
+    btn.textContent = '⇄ 9:16';
+  } else {
+    document.documentElement.style.setProperty('--stage-w','1080px');
+    document.documentElement.style.setProperty('--stage-h','1920px');
+    btn.textContent = '⇄ 16:9';
+  }
+});
+
+// autoplay on load
+restart();
+</script>
+</body>
+</html>
