@@ -67,7 +67,8 @@ html,body{ width:1080px; height:1920px; overflow:hidden; background:#000; font-f
 .gh-actions{ display:flex; gap:8px; margin-top:12px; font-size:11.5px; }
 .gh-action{ border:1px solid var(--border); border-radius:6px; padding:5px 10px; color:#c9d1d9; position:relative; }
 .gh-action .num{ background:#21262d; border-radius:99px; padding:0 6px; font-size:10.5px; margin-left:5px; }
-.gh-action.star{ border-color:var(--border); }
+.gh-action.star{ border-color:var(--border); padding-left:26px; position:relative; }
+.gh-star-icon{ position:absolute; left:9px; top:50%; margin-top:-7px; font-size:12px; line-height:1; color:#c9d1d9; }
 .gh-subrow{ display:flex; align-items:center; gap:10px; margin-top:14px; font-size:11px; color:var(--muted); font-family:'JetBrains Mono',monospace; }
 .gh-branch{ border:1px solid var(--border); border-radius:6px; padding:3px 9px; color:#c9d1d9; }
 .gh-commitrow{ display:flex; justify-content:space-between; gap:10px; padding:10px 12px; background:var(--panel); border:1px solid var(--border2); border-radius:10px 10px 0 0; font-size:11px; margin-top:14px; }
@@ -78,27 +79,27 @@ html,body{ width:1080px; height:1920px; overflow:hidden; background:#000; font-f
 .gh-filerow .name{ color:#58a6ff; } .gh-filerow .commit{ color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .gh-about{ margin-top:16px; border-top:1px solid var(--border2); padding-top:14px; font-size:11.5px; color:var(--muted); line-height:1.55; }
 .gh-about b{ color:#c9d1d9; }
-.gh-cursor{ position:absolute; top:50%; left:50%; width:16px; height:16px; margin:-8px 0 0 -8px; border-radius:50%; background:#fff;
+.gh-cursor{ position:absolute; top:50%; left:15px; width:16px; height:16px; margin:-8px 0 0 -8px; border-radius:50%; background:#fff;
   box-shadow:0 0 0 4px rgba(255,255,255,.2), 0 3px 10px rgba(0,0,0,.5); z-index:20; opacity:0; }
-.gh-ripple{ position:absolute; top:50%; left:50%; width:16px; height:16px; margin:-8px 0 0 -8px; border-radius:50%; border:2px solid var(--orange); z-index:19; opacity:0; }
+.gh-ripple{ position:absolute; top:50%; left:15px; width:16px; height:16px; margin:-8px 0 0 -8px; border-radius:50%; border:2px solid var(--orange); z-index:19; opacity:0; }
 
 /* Scene 3 */
-.browser-frame{ width:820px; max-width:88%; height:1180px; border-radius:14px; overflow:hidden;
+.browser-frame{ width:820px; max-width:88%; height:940px; border-radius:14px; overflow:hidden;
   border:1px solid var(--border); background:#fff; box-shadow:0 24px 70px rgba(0,0,0,.55); position:relative; }
 .browser-bar{ height:36px; background:var(--panel); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; padding:0 14px; }
 .bdot{ width:9px; height:9px; border-radius:50%; background:#3a3f47; }
 .burl{ margin-left:10px; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--muted);
   background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:4px 10px; flex:1;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.scroll-viewport{ position:relative; height:1144px; overflow:hidden; background:#f4f1ea; }
+.scroll-viewport{ position:relative; height:904px; overflow:hidden; background:#f4f1ea; }
 .fc-track{ position:absolute; top:0; left:0; width:100%; padding:44px 60px 60px; }
-.fc-eyebrow{ font-family:'Inter',sans-serif; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:#6b7280; margin-bottom:10px; }
+.fc-eyebrow{ font-family:'Inter',sans-serif; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:#4b5058; margin-bottom:10px; }
 .fc-title{ font-family:'Inter',sans-serif; font-weight:700; font-size:32px; color:#2b2823; margin-bottom:38px; }
 .fc-node{ background:#fff; border:2px solid #2b2823; border-radius:10px; padding:16px 22px;
   width:340px; margin:0 auto 8px; text-align:center; opacity:0; }
 .fc-node.oval{ border-radius:99px; background:#ece9e2; border-color:#c7c0b2; }
 .fc-node .t{ font-weight:800; font-size:19px; color:#1c1a17; }
-.fc-node .s{ font-family:'JetBrains Mono',monospace; font-size:12px; color:#6b6558; margin-top:4px; }
+.fc-node .s{ font-family:'JetBrains Mono',monospace; font-size:12px; color:#4a453e; margin-top:4px; }
 .fc-arrow{ width:2px; height:34px; background:#8b8578; margin:0 auto; opacity:0; }
 .fc-decision{ width:250px; height:130px; margin:0 auto 8px; position:relative; opacity:0; }
 .fc-decision .diamond{ position:absolute; inset:0; background:#fff; border:2px solid #2b2823; transform:rotate(45deg); border-radius:6px; }
@@ -110,10 +111,10 @@ html,body{ width:1080px; height:1920px; overflow:hidden; background:#000; font-f
 .fc-branch-arrow.yes{ background:var(--orange); }
 .fc-branch-tag{ font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; margin-bottom:4px; opacity:0; }
 .fc-branch-tag.yes{ color:var(--orange); }
-.fc-branch-tag.no{ color:#6b6558; }
+.fc-branch-tag.no{ color:#4a453e; }
 .fc-node.qualified{ border-color:var(--orange); background:#fdece4; width:260px; }
 .fc-node.notqualified{ background:#ece9e2; border-color:#c7c0b2; width:260px; }
-.fc-legend{ margin-top:44px; padding-top:20px; border-top:1px solid #d8d0c0; font-family:'JetBrains Mono',monospace; font-size:11px; color:#8b8578; text-align:center; opacity:0; }
+.fc-legend{ margin-top:44px; padding-top:20px; border-top:1px solid #d8d0c0; font-family:'JetBrains Mono',monospace; font-size:11px; color:#5f5a52; text-align:center; opacity:0; }
 .lower-third{ position:absolute; left:6%; right:6%; bottom:6%; z-index:5; text-align:center; }
 .lt-line{ font-weight:700; font-size:26px; color:var(--white); background:rgba(13,17,23,.72); border:1px solid var(--border);
   display:inline-block; padding:14px 26px; border-radius:12px; opacity:0; position:absolute; left:50%; top:0;
@@ -135,7 +136,7 @@ html,body{ width:1080px; height:1920px; overflow:hidden; background:#000; font-f
 <body>
 
 <div id="main" data-composition-id="main" data-width="1080" data-height="1920" data-start="0" data-duration="40">
-  <div class="bg-layer"><div class="bg-glow" id="bg-glow"></div><div class="bg-dots" id="bg-dots"></div></div>
+  <div class="bg-layer"><div class="bg-glow" id="bg-glow" data-layout-allow-overflow="true"></div><div class="bg-dots" id="bg-dots" data-layout-allow-overflow="true"></div></div>
 
   <!-- Scene 1: hook (0-7s) -->
   <div class="scene clip" id="s1" data-start="0" data-duration="7" data-track-index="0">
@@ -166,7 +167,7 @@ html,body{ width:1080px; height:1920px; overflow:hidden; background:#000; font-f
           <div class="gh-actions">
             <div class="gh-action">Watch<span class="num">74</span></div>
             <div class="gh-action">Fork<span class="num">1.1k</span></div>
-            <div class="gh-action star" id="s2-star">Star<span class="num" id="s2-starnum">18.0k</span>
+            <div class="gh-action star" id="s2-star"><span class="gh-star-icon" data-layout-allow-occlusion="true">&#9734;</span>Star<span class="num" id="s2-starnum">18.0k</span>
               <div class="gh-cursor" id="s2-cursor"></div>
               <div class="gh-ripple" id="s2-ripple"></div>
             </div>
@@ -194,9 +195,9 @@ html,body{ width:1080px; height:1920px; overflow:hidden; background:#000; font-f
           <div class="burl">example-cv-job-matching-flowchart.html</div>
         </div>
         <div class="scroll-viewport">
-          <div class="fc-track" id="fc-track">
-            <div class="fc-eyebrow">FLOWCHART · DIAGRAM DESIGN</div>
-            <div class="fc-title">CV job-matching pipeline</div>
+          <div class="fc-track" id="fc-track" data-layout-allow-overflow="true">
+            <div class="fc-eyebrow" data-layout-allow-overlap="true">FLOWCHART · DIAGRAM DESIGN</div>
+            <div class="fc-title" data-layout-allow-overlap="true">CV job-matching pipeline</div>
             <div class="fc-node oval" id="fc1"><div class="t">User login</div><div class="s">session start</div></div>
             <div class="fc-arrow" id="fca1"></div>
             <div class="fc-node" id="fc2"><div class="t">Upload CV</div><div class="s">PDF/DOCX → parsed text</div></div>
@@ -249,7 +250,7 @@ html,body{ width:1080px; height:1920px; overflow:hidden; background:#000; font-f
         just comment <span class="accent">"plugin"</span> and I'll send it to you in DMs.
       </div>
       <div class="comment-pill" id="s5-pill">
-        <div class="pill-glow" id="s5-glow"></div>
+        <div class="pill-glow" id="s5-glow" data-layout-allow-overflow="true"></div>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.38 8.38 0 01-4.13 7.24 8.5 8.5 0 01-8.61.44L3 21l1.82-5.26A8.38 8.38 0 013 11.5 8.5 8.5 0 0112 3a8.44 8.44 0 019 8.5z" stroke="#1a1008" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Comment "plugin"
       </div>
@@ -273,7 +274,7 @@ tl.set("#s4", { autoAlpha: 1 }, 28); tl.set("#s4", { autoAlpha: 0 }, 33);
 tl.set("#s5", { autoAlpha: 1 }, 33);
 
 /* ================= SCENE 1 (0-7) — hook ================= */
-tl.from(".word", { yPercent: 130, autoAlpha: 0, duration: 0.45, ease: "back.out(1.6)", stagger: { each: 0.08, from: "start" } }, 0.3);
+tl.fromTo(".word", { yPercent: 130, autoAlpha: 0 }, { yPercent: 0, autoAlpha: 1, duration: 0.45, ease: "back.out(1.6)", stagger: { each: 0.08, from: "start" } }, 0.3);
 tl.to("#s1-sub", { autoAlpha: 1, y: 0, duration: 0.5, ease: "power2.out" }, 1.35);
 tl.set("#s1-sub", { y: 10 }, 0);
 tl.to(".hook-line", { scale: 1.03, duration: 2.2, ease: "sine.inOut", yoyo: true, repeat: 1 }, 2.2);
@@ -298,7 +299,7 @@ tl.fromTo("#s2-ripple", { autoAlpha: 1, scale: 0.4 }, { scale: 3.6, autoAlpha: 0
 tl.to("#s3-eyebrow", { autoAlpha: 1, y: 0, duration: 0.4, ease: "power2.out" }, 14.1);
 tl.set("#s3-eyebrow", { y: -8 }, 14);
 
-tl.to("#fc-track", { y: -1220, duration: 13.4, ease: "power1.inOut" }, 14.3);
+tl.to("#fc-track", { y: -270, duration: 13.4, ease: "power1.inOut" }, 14.3);
 
 var fcSeq = [
   ["#fc1", 0.4, "node"], ["#fca1", 1.0, "arrow"], ["#fc2", 1.3, "node"], ["#fca2", 2.7, "arrow"],
